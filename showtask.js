@@ -54,11 +54,14 @@ function run() {
 		console.log("run");
 }
 
-document.body.innerHTML = '<div id="map" style="height: 100%">';
-console.log(coords);
+if (turnpoints.length == 0) {
+		alert('No turnpoints found.');
+} else {
+		document.body.innerHTML = '<div id="map" style="height: 100%">';
 
-maps = document.createElement('script');
-maps.type = 'text/javascript';
-maps.onload = run;
-maps.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyBw-XCEMWfJ5nWMmCGS7YHYfpahHl8RXVU&callback=initMap';
-document.body.appendChild(maps);
+		maps = document.createElement('script');
+		maps.type = 'text/javascript';
+		maps.onload = run;
+		maps.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyBw-XCEMWfJ5nWMmCGS7YHYfpahHl8RXVU&callback=initMap';
+		document.body.appendChild(maps);
+}
