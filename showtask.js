@@ -120,6 +120,8 @@ function initMap() {
 		for (var i in turnpoints) {
 				tp = turnpoints[i];
 				position = new google.maps.LatLng(tp.lat, tp.lon)
+				bounds.extend(position);
+				continue;
 
 				var marker = new google.maps.Marker({
 								position: position,
@@ -141,7 +143,6 @@ function initMap() {
 						label.bindTo('position', marker, 'position');
 						rulerpoly.setMap(map);
 				}
-				bounds.extend(position);
 		}
 		map.fitBounds(bounds);
 }
