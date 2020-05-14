@@ -4,7 +4,8 @@ function ParseDMS(input) {
 }
 
 function ConvertDMSToDD(degrees, minutes, seconds, direction) {
-    var dd = degrees + minutes/60 + seconds/(60*60);
+    // Seconds appear to be scaled by a factor of 16 on CC.eu.
+    var dd = degrees + minutes/60 + seconds/(60*60*16);
 
     if (direction == "S" || direction == "W") {
         dd = dd * -1;
@@ -42,13 +43,13 @@ function Label(opt_options) {
     // Label specific
     var span = this.span_ = document.createElement('span');
     span.style.cssText = 'position: relative; left: 0%; top: -8px; ' +
-              'white-space: nowrap; border: 0px; font-family:arial; font-weight:bold;' +
-              'padding: 2px; background-color: #ddd; '+
-                'opacity: .75; '+
-                'filter: alpha(opacity=75); '+
-                '-ms-filter: "alpha(opacity=75)"; '+
-                '-khtml-opacity: .75; '+
-				'-moz-opacity: .75;';
+				'white-space: nowrap; border: 0px; font-family:arial; font-weight:bold;' +
+				'padding: 2px; background-color: #ddd; '+
+				'opacity: .75; '+
+				'filter: alpha(opacity=75); '+
+				'-ms-filter: "alpha(opacity=75)"; '+
+				'-khtml-opacity: .75; '+
+        '-moz-opacity: .75;';
 
     var div = this.div_ = document.createElement('div');
     div.appendChild(span);
@@ -60,104 +61,103 @@ var tpText = pageText.match(/<i><bdo dir="ltr">.*?Coords.*?<br>/gs);
 var turnpoints = [];
 
 for (var i in tpText) {
-		text = tpText[i];
-		matches = text.match(/\">(.*?)<\/bdo>.*?Coords:<\/u>\s+(.*?)<br>/s);
+    text = tpText[i];
+    matches = text.match(/\">(.*?)<\/bdo>.*?Coords:<\/u>\s+(.*?)<br>/s);
     var name = matches[1];
     var coords = matches[2];
-		var latlon = matches[2].split('/');
-		var lat = ParseDMS(latlon[0]);
-		var lon = ParseDMS(latlon[1]);
-		turnpoints.push({name : name, lat : lat, lon : lon});
+    var latlon = matches[2].split('/');
+    var lat = ParseDMS(latlon[0]);
+    var lon = ParseDMS(latlon[1]);
+    turnpoints.push({name : name, lat : lat, lon : lon});
 }
 
 function initMap() {
-		Label.prototype = new google.maps.OverlayView;
+    Label.prototype = new google.maps.OverlayView;
 
-		// Implement onAdd
-		Label.prototype.onAdd = function() {
-				var pane = this.getPanes().overlayLayer;
-				pane.appendChild(this.div_);
+    // Implement onAdd
+    Label.prototype.onAdd = function() {
+        var pane = this.getPanes().overlayLayer;
+        pane.appendChild(this.div_);
 
     
-				// Ensures the label is redrawn if the text or position is changed.
-				var me = this;
-    this.listeners_ = [
-											 google.maps.event.addListener(this, 'position_changed',
-																										 function() { me.draw(); }),
-											 google.maps.event.addListener(this, 'text_changed',
-																										 function() { me.draw(); })
-											 ];
+        // Ensures the label is redrawn if the text or position is changed.
+        var me = this;
+				this.listeners_ = [
+													 google.maps.event.addListener(this, 'position_changed',
+																												 function() { me.draw(); }),
+													 google.maps.event.addListener(this, 'text_changed',
+																												 function() { me.draw(); })
+													 ];
     
-		};
+    };
 
-		// Implement onRemove
-		Label.prototype.onRemove = function() { this.div_.parentNode.removeChild(this.div_ );
-																						// Label is removed from the map, stop updating its position/text.
-																						for (var i = 0, I = this.listeners_.length; i < I; ++i) {
-																								google.maps.event.removeListener(this.listeners_[i]);
-																						}
-		};
+    // Implement onRemove
+    Label.prototype.onRemove = function() { this.div_.parentNode.removeChild(this.div_ );
+                                            // Label is removed from the map, stop updating its position/text.
+                                            for (var i = 0, I = this.listeners_.length; i < I; ++i) {
+                                                google.maps.event.removeListener(this.listeners_[i]);
+                                            }
+    };
 
-		// Implement draw
-		Label.prototype.draw = function() {
-				var projection = this.getProjection();
-				var position = projection.fromLatLngToDivPixel(this.get('position'));
-				var div = this.div_;
-				div.style.left = position.x + 'px';
-				div.style.top = position.y + 'px';
-				div.style.display = 'block';
+    // Implement draw
+    Label.prototype.draw = function() {
+        var projection = this.getProjection();
+        var position = projection.fromLatLngToDivPixel(this.get('position'));
+        var div = this.div_;
+        div.style.left = position.x + 'px';
+        div.style.top = position.y + 'px';
+        div.style.display = 'block';
 
-				this.span_.innerHTML = this.get('text').toString();
-		};
+        this.span_.innerHTML = this.get('text').toString();
+    };
 
-		var map = new google.maps.Map(document.getElementById('map'), {
-						center: {lat: turnpoints[0].lat, lng: turnpoints[0].lon},
-						mapTypeId: 'terrain',
-						zoom: 8
+    var map = new google.maps.Map(document.getElementById('map'), {
+            center: {lat: turnpoints[0].lat, lng: turnpoints[0].lon},
+            mapTypeId: 'terrain',
+            zoom: 8
         });
 
-		var bounds = new google.maps.LatLngBounds();
-		for (var i in turnpoints) {
-				tp = turnpoints[i];
-				position = new google.maps.LatLng(tp.lat, tp.lon)
-				bounds.extend(position);
-				continue;
+    var bounds = new google.maps.LatLngBounds();
+    for (var i in turnpoints) {
+        tp = turnpoints[i];
+        position = new google.maps.LatLng(tp.lat, tp.lon)
+						bounds.extend(position);
 
-				var marker = new google.maps.Marker({
-								position: position,
-								map: map,
-								label: parseInt(i) + 1 + "",
-						});
+        var marker = new google.maps.Marker({
+                position: position,
+                map: map,
+                label: parseInt(i) + 1 + "",
+            });
 
-				if (i > 0) {
-						tp1 = turnpoints[parseInt(i) - 1];
-						position1 = new google.maps.LatLng(tp1.lat, tp1.lon)
-						rulerpoly = new google.maps.Polyline({
-										path: [position, position1],
-										strokeColor: "#ffff00",
-										strokeOpacity: .7,
-										strokeWeight: 4
-								});
-						var label = new Label({ map: map });
-						label.set('text', distance( tp.lat, tp.lon, tp1.lat, tp1.lon));
-						label.bindTo('position', marker, 'position');
-						rulerpoly.setMap(map);
-				}
-		}
-		map.fitBounds(bounds);
+        if (i > 0) {
+            tp1 = turnpoints[parseInt(i) - 1];
+            position1 = new google.maps.LatLng(tp1.lat, tp1.lon)
+								rulerpoly = new google.maps.Polyline({
+												path: [position, position1],
+												strokeColor: "#ffff00",
+												strokeOpacity: .7,
+												strokeWeight: 4
+										});
+            var label = new Label({ map: map });
+            label.set('text', distance( tp.lat, tp.lon, tp1.lat, tp1.lon));
+            label.bindTo('position', marker, 'position');
+            rulerpoly.setMap(map);
+        }
+    }
+    map.fitBounds(bounds);
 }
 
 function run() {
 }
 
 if (turnpoints.length == 0) {
-		alert('No turnpoints found.');
+    alert('No turnpoints found.');
 } else {
-		document.body.innerHTML = '<div id="map" style="height: 100%">';
+    document.body.innerHTML = '<div id="map" style="height: 100%">';
 
-		maps = document.createElement('script');
-		maps.type = 'text/javascript';
-		maps.onload = run;
-		maps.src = 'https://maps.googleapis.com/maps/api/js?key=' + document.__cc_showtask_api_key__ + '&callback=initMap';
-		document.body.appendChild(maps);
+    maps = document.createElement('script');
+    maps.type = 'text/javascript';
+    maps.onload = run;
+    maps.src = 'https://maps.googleapis.com/maps/api/js?key=' + document.__cc_showtask_api_key__ + '&callback=initMap';
+    document.body.appendChild(maps);
 }
