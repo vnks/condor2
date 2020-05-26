@@ -129,20 +129,21 @@ function initMap() {
                 label: parseInt(i) + 1 + "",
             });
 
+				tp1 = turnpoints[turnpoints.length - 1]
         if (i > 0) {
             tp1 = turnpoints[parseInt(i) - 1];
-            position1 = new google.maps.LatLng(tp1.lat, tp1.lon)
-								rulerpoly = new google.maps.Polyline({
-												path: [position, position1],
-												strokeColor: "#ffff00",
-												strokeOpacity: .7,
-												strokeWeight: 4
-										});
-            var label = new Label({ map: map });
-            label.set('text', distance( tp.lat, tp.lon, tp1.lat, tp1.lon));
-            label.bindTo('position', marker, 'position');
-            rulerpoly.setMap(map);
-        }
+				}
+				position1 = new google.maps.LatLng(tp1.lat, tp1.lon)
+						rulerpoly = new google.maps.Polyline({
+										path: [position, position1],
+										strokeColor: "#ffff00",
+										strokeOpacity: .7,
+										strokeWeight: 4
+								});
+				var label = new Label({ map: map });
+				label.set('text', distance( tp.lat, tp.lon, tp1.lat, tp1.lon));
+				label.bindTo('position', marker, 'position');
+				rulerpoly.setMap(map);
     }
     map.fitBounds(bounds);
 }
